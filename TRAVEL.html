@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Viajes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mi mapa de viajes</title>
+<link rel="apple-touch-icon" id="ic">
+<style>
+:root{--bg:#f6efe3;--card:#fffaf0;--ink:#1d1a14;--mut:#7a705f;--line:#d9ccb3;--acc:#b8860b;--accbg:#f3dfa8;--red:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15130f;--card:#201c15;--ink:#f3ead8;--mut:#a89c85;--line:#3a3326;--acc:#e0a526;--accbg:#4a3a12;--red:#ff8a80}}
+:root[data-theme="dark"]{--bg:#15130f;--card:#201c15;--ink:#f3ead8;--mut:#a89c85;--line:#3a3326;--acc:#e0a526;--accbg:#4a3a12;--red:#ff8a80}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0 auto;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,system-ui,sans-serif;max-width:560px;padding:16px}
+h1{font:700 28px Georgia,serif;margin:8px 0 2px}
+h2{font:700 20px Georgia,serif;margin:20px 0 8px}
+.sub,.hint{color:var(--mut);font-size:13px;margin:0 0 12px}
+.hero,.row3 div,.box{background:var(--card);border:1.5px solid var(--ink);border-radius:8px}
+.hero{padding:12px 16px}
+.hero b{font:700 48px Georgia,serif;display:block;line-height:1}
+.hero span,.row3 span{font-size:11px;letter-spacing:.1em;color:var(--mut)}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}
+.row3 div{padding:8px 10px}
+.row3 b{font:700 22px Georgia,serif;display:block}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-family:inherit;font-size:15px;font-weight:600}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+input,select{width:100%;padding:11px;margin-bottom:8px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-family:inherit;font-size:16px}
+.fr{display:grid;grid-template-columns:90px 1fr;gap:8px}
+.add{width:100%;padding:12px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-family:inherit;font-size:16px;font-weight:700}
+.it{display:flex;align-items:center;gap:8px;width:100%;padding:11px 12px;margin-bottom:6px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-family:inherit;font-size:16px;text-align:left}
+.it span{flex:1}.it small{color:var(--mut);font-size:12px}.it i{width:22px;font-style:normal;color:var(--acc);font-weight:700}
+.it.on{background:var(--accbg);border-color:var(--acc)}
+.tr{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tr:last-child{border:0}.tr div{flex:1}.tr em{display:block;color:var(--mut);font-size:13px}
+.tr small{color:var(--mut);text-align:right;max-width:40%}
+.tr button{border:0;background:none;color:var(--mut);font-size:20px;padding:4px 8px;font-family:inherit}
+.tr button.d{color:var(--red);font-size:13px;font-weight:700}
+.bars{display:flex;gap:6px;align-items:flex-end;height:100px;padding:10px;overflow-x:auto}
+.bars div{flex:1;min-width:22px;text-align:center;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.bars u{display:block;width:100%;background:var(--acc);border-radius:3px 3px 0 0}
+.bars small{font-size:11px;color:var(--mut)}
+#map{height:230px;margin-bottom:10px;border:1.5px solid var(--ink);border-radius:8px;background:var(--card);position:relative;overflow:hidden}
+#map svg{width:100%;height:100%}
+#map .jvm-region{fill:var(--line);stroke:var(--card);stroke-width:.4;cursor:pointer}
+#map .jvm-region.v{fill:var(--acc)}
+.jvm-zoom-btn{position:absolute;left:8px;width:28px;height:28px;border-radius:6px;background:var(--ink);color:var(--bg);text-align:center;line-height:28px;font-size:20px;cursor:pointer;z-index:2;user-select:none}
+.jvm-zoomin{top:8px}.jvm-zoomout{top:42px}
+</style></head><body>
+<h1>Mi mapa de viajes</h1>
+<p class="sub">Guarda tus viajes y mira qué parte del mundo conoces.</p>
+<div id="st"></div>
+<div class="tabs"><button id="t-p">Países</button><button id="t-v">Viajes</button></div>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const C={EU:'AL AD AT BY BE BA BG HR CY CZ DK EE FI FR DE GR HU IS IE IT LV LI LT LU MT MD MC ME NL MK NO PL PT RO RU SM RS SK SI ES SE CH UA GB VA',
+AS:'AF AM AZ BH BD BT BN KH CN GE IN ID IR IQ IL JP JO KZ KW KG LA LB MY MV MN MM NP KP OM PK PH QA SA SG KR LK SY TW TJ TH TL TR TM AE UZ VN YE',
+AF:'DZ AO BJ BW BF BI CM CV CF TD KM CG CD CI DJ EG GQ ER SZ ET GA GM GH GN GW KE LS LR LY MG MW ML MR MU MA MZ NA NE NG RW ST SN SC SL SO ZA SS SD TZ TG TN UG ZM ZW',
+NA:'AG BS BB BZ CA CR CU DM DO SV GD GT HT HN JM MX NI PA KN LC VC TT US',
+SA:'AR BO BR CL CO EC GY PY PE SR UY VE',
+OC:'AU FJ KI MH FM NR NZ PW PG WS SB TO TV VU'};
+const CN={EU:'Europa',AS:'Asia',AF:'África',NA:'Norteamérica',SA:'Sudamérica',OC:'Oceanía'};
+const cont={};for(const k in C)C[k].split(' ').forEach(c=>cont[c]=k);
+let dn;try{dn=new Intl.DisplayNames(['es'],{type:'region'})}catch(e){}
+const name=c=>{try{return dn.of(c)}catch(e){return c}};
+const flag=c=>String.fromCodePoint(...[...c].map(x=>127397+x.charCodeAt(0)));
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sorted=Object.keys(cont).sort((a,b)=>name(a).localeCompare(name(b),'es'));
+const Y=new Date().getFullYear();
+let S={trips:[],marked:[]},tab='p',q='',del=null;
+try{S=Object.assign(S,JSON.parse(localStorage.getItem('viajes')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('viajes',JSON.stringify(S))}catch(e){}};
+const tripC=()=>new Set(S.trips.map(t=>t.c));
+const vis=()=>new Set([...S.marked,...tripC()]);
+
+function stats(){
+  const v=vis(),cs=new Set([...v].map(c=>cont[c])),
+  ci=new Set(S.trips.flatMap(t=>t.ci.map(x=>norm(x))));
+  $('#st').innerHTML=`<div class="hero"><b>${Math.round(v.size/sorted.length*100)}%</b><span>DEL MUNDO VISITADO</span></div>
+  <div class="row3"><div><b>${v.size}</b><span>países</span></div><div><b>${ci.size}</b><span>ciudades</span></div><div><b>${cs.size}/6</b><span>continentes</span></div></div>`;
+}
+function list(){
+  const v=vis(),t=tripC(),s=norm(q);
+  $('#list').innerHTML=sorted.filter(c=>!s||norm(name(c)).includes(s)).map(c=>
+    `<button class="it ${v.has(c)?'on':''}" data-c="${c}"><span>${flag(c)} ${esc(name(c))}</span><small>${CN[cont[c]]}</small><i>${v.has(c)?'✓':''}</i></button>`).join('');
+}
+function trips(){
+  const ts=[...S.trips].sort((a,b)=>a.y-b.y||a.id-b.id);
+  const ys=S.trips.map(t=>t.y),min=ys.length?Math.min(...ys,Y):Y,rng=[];
+  for(let y=Math.max(min,Y-30);y<=Y;y++)rng.push(y);
+  const cnt=rng.map(y=>S.trips.filter(t=>t.y===y).length),mx=Math.max(1,...cnt);
+  return `<div class="box" style="padding:12px;margin-bottom:8px">
+  <div class="fr"><select id="fy">${Array.from({length:40},(_, i)=>`<option>${Y+1-i}</option>`).join('')}</select>
+  <select id="fc">${sorted.map(c=>`<option value="${c}">${flag(c)} ${esc(name(c))}</option>`).join('')}</select></div>
+  <input id="fci" placeholder="Ciudades (separadas por comas)"><input id="fn" placeholder="Nota (opcional)">
+  <button class="add" id="add">Añadir viaje</button></div>
+  <h2>Viajes guardados</h2>
+  <div class="box">${ts.length?ts.map(t=>`<div class="tr"><div>${t.y} — <b>${esc(name(t.c))}</b>${t.n?`<em>${esc(t.n)}</em>`:''}</div><small>${esc(t.ci.join(', '))}</small><button data-d="${t.id}" class="${del===t.id?'d':''}">${del===t.id?'¿Borrar?':'×'}</button></div>`).join(''):'<p class="hint" style="padding:12px;margin:0">Aún no hay viajes.</p>'}</div>
+  <h2>Viajes por año</h2>
+  <div class="box bars">${rng.map((y,i)=>`<div><u style="height:${cnt[i]/mx*60}px"></u><small>${cnt[i]||''} · ${String(y).slice(2)}</small></div>`).join('')}</div>`;
+}
+function render(){
+  stats();
+  $('#t-p').className=tab==='p'?'on':'';$('#t-v').className=tab==='v'?'on':'';
+  if(tab==='p'){$('#app').innerHTML=`<div id="map"></div><input id="q" placeholder="Buscar país, ej. Vietnam" value="${esc(q)}"><p class="hint">Toca un país para marcarlo. Los de tus viajes se marcan solos.</p><div id="list"></div>`;list();initMap()}
+  else $('#app').innerHTML=trips();
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.id==='t-p'||b.id==='t-v'){tab=b.id==='t-p'?'p':'v';render();return}
+  if(b.dataset.c){toggle(b.dataset.c);return}
+  if(b.id==='add'){
+    const ci=$('#fci').value.split(',').map(x=>x.trim()).filter(Boolean);
+    S.trips.push({id:Date.now(),y:+$('#fy').value,c:$('#fc').value,ci,n:$('#fn').value.trim()});
+    save();render();return}
+  if(b.dataset.d){const id=+b.dataset.d;
+    if(del===id){S.trips=S.trips.filter(t=>t.id!==id);del=null;save()}else del=id;
+    render()}
+});
+document.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;list()}});
+(()=>{try{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');
+x.fillStyle='#b8860b';x.fillRect(0,0,180,180);x.font='100px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🌍',90,98);
+$('#ic').href=c.toDataURL()}catch(e){}})();
+function toggle(c){if(!cont[c]||tripC().has(c))return;const i=S.marked.indexOf(c);i<0?S.marked.push(c):S.marked.splice(i,1);save();stats();paint();if(tab==='p')list()}
+function paint(){const v=vis();document.querySelectorAll('#map .jvm-region').forEach(p=>p.classList.toggle('v',v.has(p.getAttribute('data-code'))))}
+function initMap(){const m=$('#map');if(!m)return;if(typeof jsVectorMap==='undefined'){m.remove();return}
+  try{new jsVectorMap({selector:'#map',map:'world',zoomButtons:true,showTooltip:false,zoomOnScroll:false,onRegionClick:(e,c)=>toggle(c)});paint()}catch(e){m.remove()}}
+render();
+</script></body></html>
